@@ -1,5 +1,7 @@
 # NexoHub
 
+Mira más proyectos en el [portafolio](https://portafolio-rho-snowy.vercel.app/).
+
 Detecta tu celular Android, tu topología USB, tu monitor y tu CPU, y arma
 automáticamente el comando `scrcpy` óptimo para tu equipo. Todo desde una
 interfaz gráfica (PyQt6) o desde la terminal, y todo ajustable sin tocar código.
