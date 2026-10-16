@@ -21,3 +21,10 @@ dist/
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Pruebas
+.pytest_cache/
+.coverage
+
+# videos de referencia
+*.mp4

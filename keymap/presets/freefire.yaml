@@ -1,0 +1,31 @@
+# Free Fire (com.dts.freefireth) con el HUD de fábrica, pantalla 20:9.
+# Las posiciones son aproximadas: si moviste botones en tu HUD (o tu
+# pantalla tiene otra proporción), ajústalas con el editor de NexoHub
+# ("Editar mapa"), que muestra una captura del juego de fondo.
+title: Free Fire
+package: com.dts.freefireth
+editor_key: KEY_F10
+toggle_key: KEY_F9
+suspend_key: KEY_F8
+cursor_key: KEY_LEFTALT
+overlay_key: KEY_F7
+overlay_opacity: 0.7
+controls:
+- {kind: joystick, name: Moverse, x: 0.15, y: 0.70, radius: 0.13,
+   keys: {up: KEY_W, left: KEY_A, down: KEY_S, right: KEY_D}}
+- {kind: aim, name: Cámara, x: 0.62, y: 0.40, radius: 0.45, sensitivity: 0.5, sensitivity_y: 0.5}
+- {kind: tap, name: Disparar, key: BTN_LEFT, x: 0.865, y: 0.62}
+- {kind: tap, name: Mira, key: BTN_RIGHT, x: 0.935, y: 0.46}
+- {kind: tap, name: Saltar, key: KEY_SPACE, x: 0.935, y: 0.74}
+- {kind: tap, name: Agacharse, key: KEY_C, x: 0.845, y: 0.87}
+- {kind: tap, name: Echarse, key: KEY_Z, x: 0.765, y: 0.90}
+- {kind: tap, name: Recargar, key: KEY_R, x: 0.80, y: 0.40}
+- {kind: tap, name: Recoger, key: KEY_F, x: 0.63, y: 0.56}
+- {kind: tap, name: Arma 1, key: KEY_1, x: 0.43, y: 0.88}
+- {kind: tap, name: Arma 2, key: KEY_2, x: 0.53, y: 0.88}
+- {kind: tap, name: Granada, key: KEY_3, x: 0.73, y: 0.25}
+- {kind: tap, name: Pared gel, key: KEY_4, x: 0.73, y: 0.37}
+- {kind: tap, name: Curarse, key: KEY_5, x: 0.62, y: 0.78}
+- {kind: tap, name: Habilidad, key: KEY_Q, x: 0.66, y: 0.66}
+- {kind: tap, name: Mapa, key: KEY_M, x: 0.915, y: 0.13}
+- {kind: tap, name: Mochila, key: KEY_TAB, x: 0.29, y: 0.90}

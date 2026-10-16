@@ -85,7 +85,7 @@ def find_topology_by_serial(android_serial: str) -> UsbTopology:
 
     if target is None:
         raise UsbTopologyError(
-            f"No se encontro un dispositivo USB con serial '{android_serial}'. "
+            f"No se encontró un dispositivo USB con serial '{android_serial}'. "
             f"¿El celular sigue conectado?"
         )
 
@@ -116,13 +116,13 @@ def force_power_on(topology: UsbTopology) -> list[str]:
     Fuerza power/control=on en el dispositivo y toda la cadena de hubs
     padres que esten en 'auto'. Requiere permisos de escritura en sysfs
     (root, o reglas udev instaladas). La elevacion se pide con pkexec
-    (dialogo grafico de polkit) en vez de sudo en terminal. Devuelve la
+    (diálogo gráfico de polkit) en vez de sudo en terminal. Devuelve la
     lista de rutas tocadas.
     """
     if shutil.which("pkexec") is None:
         raise UsbTopologyError(
-            "No se encontro 'pkexec' en el PATH. Instalalo (paquete: polkit) "
-            "para poder pedir la contrasena en una ventana grafica."
+            "No se encontró 'pkexec' en el PATH. Instalalo (paquete: polkit) "
+            "para poder pedir la contraseña en una ventana gráfica."
         )
     nodes = ([topology.device_node] if topology.device_node else []) + topology.parent_hubs
     touched = []
@@ -143,7 +143,7 @@ def force_power_on(topology: UsbTopology) -> list[str]:
         except subprocess.CalledProcessError as exc:
             if exc.returncode == 126:
                 raise UsbTopologyError(
-                    "Se cancelo la autenticacion (o no hay un agente de "
+                    "Se canceló la autenticación (o no hay un agente de "
                     "polkit corriendo -- en Hyprland instala y arranca "
                     "'hyprpolkitagent' o 'polkit-gnome')."
                 ) from exc

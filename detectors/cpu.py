@@ -48,18 +48,18 @@ def detect() -> CpuStatus:
 def set_performance_governor() -> None:
     """
     Cambia el governor a 'performance' con cpupower. Requiere privilegios
-    de root: se piden con pkexec, que muestra un dialogo grafico nativo
-    (via el agente de polkit) en vez de bloquear esperando una contrasena
-    en una terminal que en una app grafica no existe.
+    de root: se piden con pkexec, que muestra un diálogo gráfico nativo
+    (vía el agente de polkit) en vez de bloquear esperando una contraseña
+    en una terminal que en una app gráfica no existe.
     """
     if shutil.which("cpupower") is None:
         raise CpuError(
-            "No se encontro 'cpupower' en el PATH. Instalalo (paquete: cpupower)."
+            "No se encontró 'cpupower' en el PATH. Instalalo (paquete: cpupower)."
         )
     if shutil.which("pkexec") is None:
         raise CpuError(
-            "No se encontro 'pkexec' en el PATH. Instalalo (paquete: polkit) "
-            "para poder pedir la contrasena en una ventana grafica."
+            "No se encontró 'pkexec' en el PATH. Instalalo (paquete: polkit) "
+            "para poder pedir la contraseña en una ventana gráfica."
         )
     try:
         subprocess.run(
@@ -71,7 +71,7 @@ def set_performance_governor() -> None:
     except subprocess.CalledProcessError as exc:
         if exc.returncode == 126:
             raise CpuError(
-                "Se cancelo la autenticacion (o no hay un agente de polkit "
+                "Se canceló la autenticación (o no hay un agente de polkit "
                 "corriendo -- en Hyprland instala y arranca 'hyprpolkitagent' "
                 "o 'polkit-gnome')."
             ) from exc

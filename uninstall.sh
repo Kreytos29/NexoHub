@@ -2,8 +2,9 @@
 # Atajo para desinstalar NexoHub sin tener que acordarse del flag.
 # Hace exactamente lo mismo que "./install.sh --uninstall": borra el
 # lanzador (~/.local/bin/nexohub), la entrada de menu (.desktop), el
-# icono, y pregunta si tambien borrar ~/.local/share/nexohub (donde
-# vive el config.yaml de la instalacion).
+# icono, y pregunta si tambien borrar ~/.local/share/nexohub (el
+# programa) y ~/.config/nexohub + ~/.local/state/nexohub (tus ajustes y
+# registros).
 #
 # Uso:
 #   ./uninstall.sh

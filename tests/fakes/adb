@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""adb simulado para probar NexoHub sin un celular real."""
+import os, sys, struct, zlib, time
+
+STATE = os.environ.get("FAKE_STATE", "/tmp/fake_state")
+args = sys.argv[1:]
+with open(os.path.join(STATE, "adb.log"), "a") as fh:
+    fh.write(" ".join(args) + "\n")
+
+SERIAL = "FAKE123"
+WIFI = "192.168.1.50:5555"
+connected = os.path.exists(os.path.join(STATE, "connected"))
+wifi = os.path.exists(os.path.join(STATE, "wifi"))
+
+if args[:1] == ["-s"]:
+    args = args[2:]
+
+def out(text=""):
+    sys.stdout.write(text if text.endswith("\n") or not text else text + "\n")
+    sys.exit(0)
+
+if not args:
+    out()
+cmd = args[0]
+if cmd == "version":
+    out("Android Debug Bridge version 1.0.41\nVersion 36.0.0-13206524\nInstalled as /usr/bin/adb")
+if cmd in ("start-server", "kill-server"):
+    out()
+if cmd == "devices":
+    lines = ["List of devices attached"]
+    if connected:
+        lines.append(f"{SERIAL}               device usb:1-2 product:panther model:Pixel_7 device:panther transport_id:1")
+    if wifi:
+        lines.append(f"{WIFI}        device product:panther model:Pixel_7 device:panther transport_id:2")
+    out("\n".join(lines) + "\n")
+if cmd == "tcpip":
+    out(f"restarting in TCP mode port: {args[1]}")
+if cmd == "connect":
+    open(os.path.join(STATE, "wifi"), "w").close()
+    out(f"connected to {args[1]}")
+if cmd == "disconnect":
+    try:
+        os.remove(os.path.join(STATE, "wifi"))
+    except FileNotFoundError:
+        pass
+    out("disconnected")
+if cmd == "exec-out" and args[1:3] == ["screencap", "-p"]:
+    w, h = 108, 240
+    rows = []
+    for y in range(h):
+        row = bytearray(b"\x00")
+        for x in range(w):
+            row += bytes([x * 255 // w, y * 255 // h, 160])
+        rows.append(bytes(row))
+    raw = b"".join(rows)
+    def chunk(t, d):
+        c = struct.pack(">I", len(d)) + t + d
+        return c + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    sys.stdout.buffer.write(png)
+    sys.exit(0)
+if cmd == "shell":
+    sh = args[1:]
+    if sh[:1] == ["getprop"]:
+        props = {
+            "ro.product.model": "Pixel 7", "ro.product.brand": "google",
+            "ro.build.version.release": "14", "ro.board.platform": "gs201",
+            "ro.hardware": "panther",
+        }
+        out(props.get(sh[1], ""))
+    if sh[:2] == ["wm", "size"]:
+        sizefile = os.path.join(STATE, "wmsize")
+        if len(sh) == 3:
+            if sh[2] == "reset":
+                try: os.remove(sizefile)
+                except FileNotFoundError: pass
+            else:
+                open(sizefile, "w").write(sh[2])
+            out()
+        lines = "Physical size: 1080x2400"
+        if os.path.exists(sizefile):
+            lines += "\nOverride size: " + open(sizefile).read().strip()
+        out(lines)
+    if sh[:2] == ["dumpsys", "battery"]:
+        temp = open(os.path.join(STATE, "temp")).read().strip() if os.path.exists(os.path.join(STATE, "temp")) else "318"
+        out("Current Battery Service state:\n  AC powered: false\n  USB powered: true\n  status: 2\n"
+            f"  health: 2\n  present: true\n  level: 81\n  scale: 100\n  voltage: 4123\n  temperature: {temp}\n  technology: Li-ion")
+    if sh[:3] == ["ip", "route", "get"]:
+        out("1.0.0.0 via 192.168.1.1 dev wlan0 src 192.168.1.50 uid 0")
+    if sh[:2] == ["ip", "-f"]:
+        out("5: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP>\n    inet 192.168.1.50/24 brd 192.168.1.255 scope global wlan0")
+    out()
+out()

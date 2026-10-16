@@ -2,9 +2,9 @@
 """
 Proceso auxiliar standalone: el overlay de FPS estilo BlueStacks/emulador.
 
-Por que un proceso aparte en vez de una ventana mas de la GUI principal:
-un QWidget de Qt con "quedate siempre arriba" (lo que se probo primero)
-no puede garantizar nada de eso en Wayland/Hyprland -- ahi el cliente no
+Por que un proceso aparte en vez de una ventana más de la GUI principal:
+un QWidget de Qt con "quédate siempre arriba" (lo que se probo primero)
+no puede garantizar nada de eso en Wayland/Hyprland -- ahí el cliente no
 tiene permiso para posicionarse a si mismo en la pantalla ni para forzar
 estar por encima de otras ventanas (ni hablar de una en pantalla
 completa como scrcpy). Eso lo decide el compositor.
@@ -13,17 +13,17 @@ La forma correcta en Wayland es el protocolo wlr-layer-shell: la misma
 capa que usan cosas como waybar o las notificaciones, que SI estan
 garantizadas por encima de las ventanas normales. GtkLayerShell es la
 libreria que expone ese protocolo de forma simple, pero solo tiene
-bindings para GTK -- no para Qt -- y mezclar dos toolkits graficos (Qt
+bindings para GTK -- no para Qt -- y mezclar dos toolkits gráficos (Qt
 + GTK) con dos bucles de eventos en el mismo proceso es fragil. Por eso
 este overlay corre como su propio proceso GTK3, y se comunica con
-NexoHub (que sigue siendo 100% Qt) por su entrada estandar: cada linea
-que llega es un numero de FPS, o "SHOW"/"HIDE". Se cierra solo cuando
+NexoHub (que sigue siendo 100% Qt) por su entrada estándar: cada línea
+que llega es un número de FPS, o "SHOW"/"HIDE". Se cierra solo cuando
 NexoHub cierra ese pipe (stdin llega a EOF).
 
 Requiere: python3-gi + GTK3 + gtk-layer-shell (paquete del sistema,
 NO de pip -- ver detectors/dependencies.py). Si algo de esto falta,
 NexoHub se da cuenta antes de intentar arrancar este script y usa un
-overlay de respaldo mas simple.
+overlay de respaldo más simple.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gtk, GtkLayerShell, GLib  # noqa: E402
 
-# Mismos colores/umbrales que el resto de NexoHub (ver COLORS en gui.py).
+# Mismos colores/umbrales que el resto de NexoHub (ver COLORS en ui/theme.py).
 GREEN = "#34d17f"
 YELLOW = "#f2bd4e"
 RED = "#ff5566"
@@ -100,10 +100,10 @@ _FOCUS_POLL_MS = 400
 def _active_window_is_scrcpy() -> bool:
     """
     Sin hyprctl (compositor distinto de Hyprland) no hay forma generica
-    de saber cual es la ventana activa, asi que se asume que si (se
+    de saber cual es la ventana activa, así que se asume que si (se
     mantiene el comportamiento anterior: visible todo el tiempo mientras
-    la transmision este activa). Con hyprctl, se consulta la ventana
-    enfocada real y solo se considera "activa" si es la de scrcpy -- asi
+    la transmisión este activa). Con hyprctl, se consulta la ventana
+    enfocada real y solo se considera "activa" si es la de scrcpy -- así
     el overlay no queda flotando encima de otras ventanas (YouTube,
     musica, etc.) cuando el usuario cambia de ventana.
     """
@@ -203,7 +203,7 @@ class FpsBadge:
             GtkLayerShell.set_margin(self.window, edge, MARGIN)
 
     def _on_draw(self, widget, cr) -> bool:
-        """Pinta el recuadro negro casi solido detras del numero. Ver el
+        """Pinta el recuadro negro casi sólido detrás del número. Ver el
         comentario en __init__ sobre por que esto no se puede resolver
         solo con CSS. Devuelve False para que GTK siga dibujando el
         label encima con normalidad."""
@@ -220,7 +220,7 @@ class FpsBadge:
 
     def _make_click_through(self) -> None:
         """Que los clics le lleguen a lo que hay debajo (scrcpy), no a la
-        placa de FPS. Si pycairo no esta disponible se lo salta sin
+        placa de FPS. Si pycairo no está disponible se lo salta sin
         romper nada -- el overlay se ve igual, solo que esa esquina
         puntual dejaria de ser 'transparente' a los clics."""
         try:

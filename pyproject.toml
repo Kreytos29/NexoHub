@@ -1,0 +1,14 @@
+# NexoHub se ejecuta desde su carpeta (python gui.py / python main.py) o con
+# ./install.sh; este archivo solo configura las herramientas de desarrollo.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

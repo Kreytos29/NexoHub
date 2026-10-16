@@ -1,6 +1,6 @@
 """
 Detecta el celular Android conectado por ADB: modelo, marca, chipset,
-version de Android y encoders de video disponibles via scrcpy.
+version de Android y encoders de video disponibles vía scrcpy.
 """
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 
+import adb_tools
 from detectors.wireless import is_wireless_serial
 
 
@@ -49,7 +50,7 @@ class AndroidDevice:
         sw dentro de ese mismo codec). Esto es clave para la portabilidad:
         cada chipset (MediaTek, Qualcomm, Exynos, etc.) expone sus encoders
         de hardware con nombres propios (c2.mtk.*, c2.qti.*, OMX.qcom.*...),
-        asi que nunca hay que asumir un nombre fijo -- siempre se pregunta
+        así que nunca hay que asumir un nombre fijo -- siempre se pregunta
         "cual es el mejor encoder para este codec en ESTE celular".
         """
         candidates = [enc for enc in self.encoders if enc.codec == codec]
@@ -66,7 +67,7 @@ def _check_binaries() -> None:
     for binary in ("adb", "scrcpy"):
         if shutil.which(binary) is None:
             raise AndroidDeviceError(
-                f"No se encontro el binario '{binary}' en el PATH. "
+                f"No se encontró el binario '{binary}' en el PATH. "
                 f"Instalalo antes de continuar (paquete: android-tools / scrcpy)."
             )
 
@@ -78,6 +79,12 @@ def _run(cmd: list[str]) -> str:
         )
     except FileNotFoundError as exc:
         raise AndroidDeviceError(f"No se pudo ejecutar: {' '.join(cmd)}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise AndroidDeviceError(
+            f"Se agotó el tiempo de espera ejecutando: {' '.join(cmd)}. "
+            f"Si el celular está bloqueado o pide un permiso en pantalla, "
+            f"acéptalo y vuelve a intentar."
+        ) from exc
     return result.stdout
 
 
@@ -85,41 +92,30 @@ def list_connected_serials(target: str | None = None) -> list[str]:
     """
     Devuelve los seriales de los dispositivos ADB autorizados y conectados.
 
-    Antes esta funcion abortaba con AndroidDeviceError apenas encontraba
-    UNA linea "unauthorized" en `adb devices -l`, sin importar si ese
-    celular era el que interesaba. Eso rompia el caso comun de "tengo un
+    Antes esta función abortaba con AndroidDeviceError apenas encontraba
+    UNA línea "unauthorized" en `adb devices -l`, sin importar si ese
+    celular era el que interesaba. Eso rompia el caso común de "tengo un
     celular ya autorizado y pruebo con otro nuevo": mientras el celular
-    nuevo no acepta el dialogo de depuracion en pantalla, la deteccion
-    del celular viejo (que si esta autorizado) tambien fallaba.
+    nuevo no acepta el diálogo de depuración en pantalla, la detección
+    del celular viejo (que si está autorizado) también fallaba.
 
     Ahora solo se lanza el error de "no autorizado" cuando de verdad
-    bloquea lo que se pidio: si se paso `target` y ESE serial especifico
-    aparece como unauthorized, o si no se paso `target` y no hay NINGUN
+    bloquea lo que se pidió: si se pasó `target` y ESE serial especifico
+    aparece como unauthorized, o si no se pasó `target` y no hay NINGÚN
     celular autorizado (solo unauthorized). Un unauthorized "de otro
     celular" que no es el target ya no bloquea nada.
     """
     _check_binaries()
-    output = _run(["adb", "devices", "-l"])
-    authorized: list[str] = []
-    unauthorized: list[str] = []
-    for line in output.splitlines()[1:]:
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split()
-        serial = parts[0]
-        status = parts[1] if len(parts) > 1 else ""
-        if status == "unauthorized":
-            unauthorized.append(serial)
-        elif status == "device":
-            authorized.append(serial)
+    entries = adb_tools.parse_devices(_run(["adb", "devices", "-l"]))
+    authorized = [e.serial for e in entries if e.state == "device"]
+    unauthorized = [e.serial for e in entries if e.state == "unauthorized"]
 
     blocked = (target is not None and target in unauthorized) or (
         target is None and not authorized and unauthorized
     )
     if blocked:
         raise AndroidDeviceError(
-            "Celular detectado pero no autorizado para depuracion USB. "
+            "Celular detectado pero no autorizado para depuración USB. "
             "Revisa la pantalla del celular y acepta el permiso de ADB."
         )
     return authorized
@@ -130,7 +126,7 @@ def restart_adb_server() -> str:
     Reinicia el servidor adb ('adb kill-server' + 'adb start-server').
 
     Sirve para destrabar el demonio adb cuando queda en un estado raro
-    -- comun al alternar entre varios celulares distintos, cuando
+    -- común al alternar entre varios celulares distintos, cuando
     'adb devices' no refleja lo que hay realmente conectado, o cuando un
     celular queda marcado 'unauthorized'/'offline' de forma persistente
     aunque este bien conectado y desbloqueado.
@@ -184,30 +180,14 @@ def _parse_encoders(serial: str) -> list[Encoder]:
     return encoders
 
 
-def detect(serial: str | None = None) -> AndroidDevice:
-    """
-    Detecta el dispositivo Android conectado. Si hay mas de uno y no se
-    especifica serial, lanza AndroidDeviceError para que el caller decida
-    -- EXCEPTO cuando la ambiguedad es "USB + una conexion WiFi del mismo
-    telefono": ahi se prioriza el serial USB "de fabrica" sin mas (es lo
-    que se espera al pulsar "Detectar", que asume USB como punto de
-    entrada; el modo WiFi -- de video o de audio dual -- se activa aparte,
-    explicitamente).
-
-    IMPORTANTE: esto NUNCA desconecta la sesion WiFi que haya activa.
-    Antes lo hacia (para "limpiar" conexiones viejas colgadas), pero esa
-    limpieza no tiene forma de distinguir una sesion vieja sin uso de una
-    que la GUI esta usando activamente para el audio dual -- cortarla a
-    ciegas rompia el audio por WiFi cada vez que se volvia a pulsar
-    "Detectar" con esa funcion activa. Si de verdad queda una conexion
-    WiFi vieja bloqueando algo, se cierra a mano con 'adb disconnect
-    ip:puerto' (o el boton "Volver a USB" de la GUI).
-    """
+def pick_serial(serial: str | None = None) -> str:
+    """Elige el celular a usar: el pedido, o el único (preferiblemente por
+    USB) si no se pidió ninguno. Lanza AndroidDeviceError si no hay o es ambiguo."""
     serials = list_connected_serials(target=serial)
     if not serials:
         raise AndroidDeviceError(
-            "No se detecto ningun celular Android conectado por USB con "
-            "depuracion habilitada."
+            "No se detectó ningún celular Android conectado por USB con "
+            "depuración habilitada."
         )
     if serial is None:
         if len(serials) > 1:
@@ -223,7 +203,30 @@ def detect(serial: str | None = None) -> AndroidDevice:
         else:
             serial = serials[0]
     elif serial not in serials:
-        raise AndroidDeviceError(f"El serial {serial} no esta conectado.")
+        raise AndroidDeviceError(f"El serial {serial} no está conectado.")
+    return serial
+
+
+def detect(serial: str | None = None) -> AndroidDevice:
+    """
+    Detecta el dispositivo Android conectado. Si hay más de uno y no se
+    especifica serial, lanza AndroidDeviceError para que el caller decida
+    -- EXCEPTO cuando la ambigüedad es "USB + una conexión WiFi del mismo
+    teléfono": ahí se prioriza el serial USB "de fábrica" sin más (es lo
+    que se espera al pulsar "Detectar", que asume USB como punto de
+    entrada; el modo WiFi -- de video o de audio dual -- se activa aparte,
+    explicitamente).
+
+    IMPORTANTE: esto NUNCA desconecta la sesión WiFi que haya activa.
+    Antes lo hacia (para "limpiar" conexiones viejas colgadas), pero esa
+    limpieza no tiene forma de distinguir una sesión vieja sin uso de una
+    que la GUI está usando activamente para el audio dual -- cortarla a
+    ciegas rompia el audio por WiFi cada vez que se volvia a pulsar
+    "Detectar" con esa función activa. Si de verdad queda una conexión
+    WiFi vieja bloqueando algo, se cierra a mano con 'adb disconnect
+    ip:puerto' (o el botón "Volver a USB" de la GUI).
+    """
+    serial = pick_serial(serial)
 
     device = AndroidDevice(
         serial=serial,

@@ -1,16 +1,16 @@
 """
 Junta TODAS las acciones que necesitan privilegios de root al lanzar
 scrcpy -- forzar power/control=on en cada hub de la cadena USB que
-este en 'auto', y cambiar el CPU governor -- en una UNICA invocacion de
+este en 'auto', y cambiar el CPU governor -- en una ÚNICA invocación de
 pkexec.
 
-Antes cada cosa pedia su propio pkexec por separado: un dialogo de
-contrasena por cada nodo USB en 'auto' (el celular + cada hub padre,
-tipicamente 2-3) mas otro mas si tambien se activaba "Forzar CPU
-performance". Con un celular detras de varios hubs, eso eran hasta 4
-ventanas de contrasena seguidas para lanzar una sola vez. Ahora se arma
-un unico script de shell con todo lo que haya que hacer y se le pide a
-polkit UNA sola autenticacion para correrlo entero.
+Antes cada cosa pedia su propio pkexec por separado: un diálogo de
+contraseña por cada nodo USB en 'auto' (el celular + cada hub padre,
+típicamente 2-3) más otro más si también se activaba "Forzar CPU
+performance". Con un celular detrás de varios hubs, eso eran hasta 4
+ventanas de contraseña seguidas para lanzar una sola vez. Ahora se arma
+un único script de shell con todo lo que haya que hacer y se le pide a
+polkit UNA sola autenticación para correrlo entero.
 """
 from __future__ import annotations
 
@@ -38,8 +38,8 @@ def apply_privileged_fixes(
 ) -> list[str]:
     """
     Aplica los ajustes marcados (USB power / CPU governor) con una sola
-    autenticacion grafica. Si no hay nada realmente pendiente (ej. el
-    USB ya esta en 'on' y no se pidio tocar el CPU), no pide contrasena
+    autenticación gráfica. Si no hay nada realmente pendiente (ej. el
+    USB ya está en 'on' y no se pidió tocar el CPU), no pide contraseña
     ni corre pkexec. Devuelve las rutas de USB que se tocaron, para
     loguearlas.
     """
@@ -50,8 +50,8 @@ def apply_privileged_fixes(
 
     if shutil.which("pkexec") is None:
         raise PrivilegedActionError(
-            "No se encontro 'pkexec' en el PATH. Instalalo (paquete: polkit) "
-            "para poder pedir la contrasena en una ventana grafica."
+            "No se encontró 'pkexec' en el PATH. Instalalo (paquete: polkit) "
+            "para poder pedir la contraseña en una ventana gráfica."
         )
 
     script_parts = []
@@ -64,7 +64,7 @@ def apply_privileged_fixes(
     if fix_cpu:
         if shutil.which("cpupower") is None:
             raise PrivilegedActionError(
-                "No se encontro 'cpupower' en el PATH. Instalalo (paquete: cpupower)."
+                "No se encontró 'cpupower' en el PATH. Instalalo (paquete: cpupower)."
             )
         script_parts.append("cpupower frequency-set -g performance")
 
@@ -79,7 +79,7 @@ def apply_privileged_fixes(
     except subprocess.CalledProcessError as exc:
         if exc.returncode == 126:
             raise PrivilegedActionError(
-                "Se cancelo la autenticacion (o no hay un agente de polkit "
+                "Se canceló la autenticación (o no hay un agente de polkit "
                 "corriendo -- en Hyprland instala y arranca 'hyprpolkitagent' "
                 "o 'polkit-gnome')."
             ) from exc

@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""scrcpy simulado: imprime FPS cada segundo hasta recibir SIGTERM."""
+import os, sys, time, signal
+
+STATE = os.environ.get("FAKE_STATE", "/tmp/fake_state")
+args = sys.argv[1:]
+if "--version" in args:
+    print("scrcpy 4.1 <https://github.com/Genymobile/scrcpy>")
+    sys.exit(0)
+if "--list-encoders" in args:
+    print("""scrcpy 4.1 <https://github.com/Genymobile/scrcpy>
+INFO: List of video encoders:
+    --video-codec=h264 --video-encoder=c2.exynos.h264.encoder    (hw) [vendor]
+    --video-codec=h265 --video-encoder=c2.exynos.hevc.encoder    (hw) [vendor]
+    --video-codec=av1  --video-encoder=c2.android.av1.encoder    (sw)
+    --video-codec=h264 --video-encoder=c2.android.avc.encoder    (sw)
+INFO: List of audio encoders:
+    --audio-codec=opus --audio-encoder=c2.android.opus.encoder   (sw)""")
+    sys.exit(0)
+
+with open(os.path.join(STATE, "scrcpy.log"), "a") as fh:
+    fh.write(" ".join(args) + "\n")
+
+if os.environ.get("FAKE_SCRCPY_FAIL") or os.path.exists(os.path.join(STATE, "scrcpy_fail")):
+    print("scrcpy 4.1 <https://github.com/Genymobile/scrcpy>", flush=True)
+    print("ERROR: Could not find any ADB device", flush=True)
+    sys.exit(1)
+
+record = next((a.split("=", 1)[1] for a in args if a.startswith("--record=")), None)
+if record:
+    with open(record, "wb") as fh:
+        fh.write(b"fake-video")
+
+def stop(*_):
+    print("INFO: Disconnected", flush=True)
+    sys.exit(0)
+signal.signal(signal.SIGTERM, stop)
+signal.signal(signal.SIGINT, stop)
+
+print("scrcpy 4.1 <https://github.com/Genymobile/scrcpy>", flush=True)
+print("INFO: Device: [Google] google Pixel 7 (Android 14)", flush=True)
+print("INFO: Renderer: opengl", flush=True)
+n = 0
+while True:
+    time.sleep(1)
+    n += 1
+    print(f"INFO: {58 + n % 3} fps", flush=True)

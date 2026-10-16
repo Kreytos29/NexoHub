@@ -39,7 +39,7 @@ input_mode: uhid
 #                 Requiere Android 11+. En la GUI, elígelo en el combo de
 #                 Audio (prepara el canal WiFi solo, tocando "Detectar"
 #                 primero por USB); la CLI no automatiza el sidecar todavia.
-audio_route: off
+audio_route: "off"
 
 # Enviar audio del celular al PC via scrcpy (solo aplica si audio_route
 # es "scrcpy"; se mantiene por retrocompatibilidad con config.yaml viejos).
@@ -94,6 +94,59 @@ preferred_device_serial: ""
 # WiFi" en la GUI, o `--wifi` en la CLI). El default (5555) sirve casi
 # siempre; cámbialo solo si está ocupado o bloqueado en tu red.
 wifi_port: 5555
+
+# --------------------------------------------------------------------
+# Novedades de la 1.1: ventana, control, grabación y detección
+# --------------------------------------------------------------------
+
+# Buffer de video en ms (--video-buffer). 0 = sin buffer, mínima latencia
+# (lo ideal por cable). Por WiFi, 30-100 ms evita tirones a costa de delay.
+video_buffer: 0
+
+# Ventana de scrcpy
+always_on_top: false        # --always-on-top: la ventana queda encima de todo
+borderless: false           # --window-borderless: sin barra de título
+# window_title: "Mi celular" # título personalizado de la ventana
+# capture_orientation: "@90" # auto | 0 | 90 | 180 | 270 ("@" bloquea la rotación)
+
+# Control del celular (solo aplican si input_mode no es "disabled")
+stay_awake: true            # --stay-awake: no dejar que el celular se duerma
+turn_screen_off: false      # --turn-screen-off: apaga la pantalla del celular
+show_touches: false         # --show-touches: muestra los toques en el celular
+power_off_on_close: false   # --power-off-on-close: apaga el celular al cerrar
+
+# Mapeo de teclado y mouse a toques, como en los emuladores (BlueStacks,
+# Panda Mouse...). Corre junto con scrcpy al lanzar. Teclas por defecto (se
+# cambian en el editor de cada mapa): F9 activa/desactiva, F8 pausa, Alt
+# libera el cursor, F10 abre el editor y F7 muestra/oculta las teclas.
+# Los mapas viven en ~/.config/nexohub/keymaps/ (los de fábrica, en
+# keymap/presets/). Requiere estar en el grupo "input" y python-evdev.
+keymap_enabled: false
+keymap: freefire
+# Dibujar las teclas encima del juego (gtk-layer-shell, por ahora Hyprland).
+keymap_overlay: true
+
+# Mando de juego del PC reenviado al celular (--gamepad):
+#   disabled (default) | uhid | aoa
+# gamepad: uhid
+
+# Búfer de audio en ms (solo con audio_route: scrcpy). Más bajo = menos
+# delay pero más riesgo de cortes. Default de scrcpy: 50.
+audio_buffer: 50
+
+# Grabación. El botón «Grabar» de la GUI (o `--record` en la CLI) guarda
+# la sesión en este formato y carpeta. Sin audio salvo audio_route: scrcpy.
+record_format: mkv          # mkv | mp4
+# recordings_dir: ~/Videos/NexoHub
+# captures_dir: ~/Pictures/NexoHub
+
+# Al abrir la GUI (o conectar el cable), detecta solo el celular si hay
+# exactamente uno listo. Ponlo en false para detectar siempre a mano.
+auto_detect: true
+
+# Perfil seleccionado al abrir la GUI (se guarda solo al pulsar «Guardar
+# ajustes»). Vacío = «Personalizado».
+# active_profile: competitive
 
 # Perfiles: cada uno sobreescribe las claves de arriba al activarlo con
 # --profile <nombre>. Ideal para cambiar rapido entre "quiero minima

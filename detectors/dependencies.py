@@ -1,14 +1,14 @@
 """
 Verifica que todo lo necesario para correr scrcpy-autoconfig este instalado,
-y puede instalar automaticamente lo que falte.
+y puede instalar automáticamente lo que falte.
 
 Cubre dos capas:
   1. Binarios del sistema (adb, scrcpy, cpupower, pkexec) -- se instalan con
      el gestor de paquetes de la distro detectada, elevando permisos con
-     pkexec (ventana grafica), nunca con sudo en terminal.
+     pkexec (ventana gráfica), nunca con sudo en terminal.
   2. Paquetes de Python (los de requirements.txt) -- se instalan con pip.
 
-Esto es lo que hace posible que "instalar lo necesario" sea un boton en la
+Esto es lo que hace posible que "instalar lo necesario" sea un botón en la
 GUI en vez de una lista de comandos que el usuario tiene que copiar a mano.
 """
 from __future__ import annotations
@@ -79,7 +79,7 @@ OPTIONAL_BINARIES = ["cpupower", "pkexec", "gtk-layer-shell", "bluetoothctl"]
 # gtk-layer-shell tiene uno propio para que quede claro para que sirve.
 OPTIONAL_BINARY_DETAILS: dict[str, str] = {
     "gtk-layer-shell": "opcional (overlay de FPS estilo BlueStacks en Wayland)",
-    "bluetoothctl": "opcional (diagnostico de Bluetooth para audio externo)",
+    "bluetoothctl": "opcional (diagnóstico de Bluetooth para audio externo)",
 }
 DEFAULT_OPTIONAL_DETAIL = "opcional (fix USB/CPU y ventana de contraseña)"
 
@@ -91,6 +91,8 @@ PYTHON_PACKAGES = {
     "yaml": "pyyaml",
     "rich": "rich",
     "PyQt6": "PyQt6",
+    # Mapeo de teclas: leer teclado/mouse del kernel (en Arch: python-evdev).
+    "evdev": "evdev",
 }
 
 PACKAGE_MANAGERS = {
@@ -125,7 +127,7 @@ def _gtk_layer_shell_available() -> bool:
     (PyGObject) + una libreria del sistema + su typelib GIR -- por eso
     se detecta importando, no con shutil.which. Si cualquiera de las
     tres piezas falta, el overlay de FPS estilo BlueStacks no puede
-    arrancar y NexoHub se cae de vuelta a un overlay mas simple.
+    arrancar y NexoHub se cae de vuelta a un overlay más simple.
     """
     try:
         import gi
@@ -139,7 +141,7 @@ def _gtk_layer_shell_available() -> bool:
 
 
 def gtk_layer_shell_available() -> bool:
-    """Punto de entrada publico para que gui.py decida si vale la pena
+    """Punto de entrada publico para que la GUI decida si vale la pena
     intentar levantar fps_overlay_helper.py."""
     return _gtk_layer_shell_available()
 
@@ -209,7 +211,7 @@ def _polkit_agent_running() -> bool:
     """
     Heuristica simple: busca procesos de agentes de polkit conocidos.
     Sin uno corriendo, pkexec falla o se queda colgado esperando un
-    dialogo que nunca aparece (comun en Hyprland, que no trae uno por
+    diálogo que nunca aparece (común en Hyprland, que no trae uno por
     defecto a diferencia de GNOME/KDE).
     """
     agent_names = (
@@ -247,21 +249,21 @@ def check() -> DependencyReport:
 
 def install_missing_system_packages(report: DependencyReport) -> None:
     """Instala los binarios faltantes con el gestor de paquetes detectado,
-    via pkexec. Antes de instalar, sincroniza la base de paquetes de la
-    distro (una sola autenticacion para las dos cosas) para evitar el
-    error mas comun de todos: que la base local este desactualizada y
+    vía pkexec. Antes de instalar, sincroniza la base de paquetes de la
+    distro (una sola autenticación para las dos cosas) para evitar el
+    error más común de todos: que la base local esté desactualizada y
     apunte a una version de un paquete que los espejos ya no tienen."""
     if not report.missing_binaries:
         return
     if report.package_manager is None:
         raise DependencyError(
-            "No se reconocio ningun gestor de paquetes (pacman/apt/dnf/zypper). "
+            "No se reconoció ningún gestor de paquetes (pacman/apt/dnf/zypper). "
             "Instala manualmente: " + ", ".join(report.missing_binaries)
         )
     if shutil.which("pkexec") is None:
         raise DependencyError(
-            "No se encontro 'pkexec' en el PATH; no se puede pedir la "
-            "contrasena en una ventana grafica para instalar paquetes."
+            "No se encontró 'pkexec' en el PATH; no se puede pedir la "
+            "contraseña en una ventana gráfica para instalar paquetes."
         )
     sync_cmd = PACKAGE_SYNC_COMMANDS.get(report.package_manager)
     install_cmd = [*PACKAGE_MANAGERS[report.package_manager], *report._map_binaries_to_packages()]
@@ -276,7 +278,7 @@ def install_missing_system_packages(report: DependencyReport) -> None:
     except subprocess.CalledProcessError as exc:
         if exc.returncode == 126:
             raise DependencyError(
-                "Se cancelo la autenticacion (o no hay un agente de polkit "
+                "Se canceló la autenticación (o no hay un agente de polkit "
                 "corriendo -- en Hyprland instala y arranca 'hyprpolkitagent' "
                 "o 'polkit-gnome')."
             ) from exc
@@ -285,9 +287,9 @@ def install_missing_system_packages(report: DependencyReport) -> None:
             raise DependencyError(
                 "Los espejos de paquetes no tienen (todavia) la version que "
                 "tu sistema tiene registrada -- es un problema de la base de "
-                "paquetes de tu distro, no de NexoHub ni de tu conexion. Se "
+                "paquetes de tu distro, no de NexoHub ni de tu conexión. Se "
                 "intento sincronizar antes de instalar, pero puede que haga "
-                "falta una actualizacion completa. Abri una terminal y corre:\n\n"
+                "falta una actualización completa. Abre una terminal y corre:\n\n"
                 + (
                     "  sudo pacman -Syyu\n\n(el doble 'yy' fuerza a re-descargar "
                     "la base de datos completa, no solo la desactualizada)"
@@ -298,10 +300,10 @@ def install_missing_system_packages(report: DependencyReport) -> None:
                     if report.package_manager == "dnf"
                     else "  sudo zypper refresh && sudo zypper update"
                 )
-                + "\n\ny despues volve a intentar instalar desde aca.\n\n"
-                f"Detalle tecnico:\n{detail}"
+                + "\n\ny después vuelve a intentar instalar desde acá.\n\n"
+                f"Detalle técnico:\n{detail}"
             ) from exc
-        raise DependencyError(f"Fallo la instalacion: {detail}") from exc
+        raise DependencyError(f"Falló la instalación: {detail}") from exc
 
 
 def install_missing_python_packages(report: DependencyReport) -> None:
@@ -323,4 +325,4 @@ def install_missing_python_packages(report: DependencyReport) -> None:
             check=True,
         )
     except subprocess.CalledProcessError as exc:
-        raise DependencyError(f"Fallo 'pip install': {exc.stderr}") from exc
+        raise DependencyError(f"Falló 'pip install': {exc.stderr}") from exc

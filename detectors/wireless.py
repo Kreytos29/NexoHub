@@ -2,14 +2,14 @@
 Maneja el cambio de ADB de USB a WiFi/LAN (modo `adb tcpip`) para poder
 usar scrcpy sin cable una vez que el celular ya fue detectado por USB.
 
-Flujo tipico:
-    1. El celular esta conectado por USB y ya fue detectado (tiene un
-       serial "de fabrica", no una direccion IP).
-    2. `enable_over_wifi(serial)` le pide la IP de WiFi al celular via
+Flujo típico:
+    1. El celular está conectado por USB y ya fue detectado (tiene un
+       serial "de fábrica", no una direccion IP).
+    2. `enable_over_wifi(serial)` le pide la IP de WiFi al celular vía
        ADB, activa el demonio ADB en modo TCP/IP en ese mismo puerto, y
        hace `adb connect ip:puerto`.
-    3. A partir de ahi se puede desconectar el cable: el "serial" para
-       todo lo demas (scrcpy, getprop, etc.) pasa a ser "ip:puerto".
+    3. A partir de ahí se puede desconectar el cable: el "serial" para
+       todo lo demás (scrcpy, getprop, etc.) pasa a ser "ip:puerto".
 
 Requisito de red: el celular y el PC deben estar en la misma red LAN
 (mismo router/WiFi). No sirve para conectarse a traves de internet.
@@ -34,7 +34,7 @@ class WirelessError(RuntimeError):
 
 
 def is_wireless_serial(serial: str) -> bool:
-    """True si el serial es una direccion ip:puerto (conexion WiFi/LAN)."""
+    """True si el serial es una direccion ip:puerto (conexión WiFi/LAN)."""
     return bool(_WIRELESS_SERIAL_RE.match(serial or ""))
 
 
@@ -46,13 +46,13 @@ def _run(cmd: list[str], timeout: int = 15) -> subprocess.CompletedProcess:
     except FileNotFoundError as exc:
         raise WirelessError(f"No se pudo ejecutar: {' '.join(cmd)}") from exc
     except subprocess.TimeoutExpired as exc:
-        raise WirelessError(f"Se agoto el tiempo de espera: {' '.join(cmd)}") from exc
+        raise WirelessError(f"Se agotó el tiempo de espera: {' '.join(cmd)}") from exc
 
 
 def get_device_wifi_ip(serial: str) -> str:
     """
-    Pregunta al celular (por USB, via ADB) cual es su IP en la interfaz
-    WiFi. Prueba primero `ip route` (mas confiable, no depende del
+    Pregunta al celular (por USB, vía ADB) cual es su IP en la interfaz
+    WiFi. Prueba primero `ip route` (más confiable, no depende del
     nombre de la interfaz) y cae a `ip addr show wlan0` si hace falta.
     """
     # "ip route get 1" devuelve la ruta que tomaria un paquete saliente,
@@ -92,7 +92,7 @@ def connect(address: str, timeout: int = 15) -> None:
     if "connected to" in output or "already connected" in output:
         return
     raise WirelessError(
-        f"'adb connect {address}' no confirmo la conexion "
+        f"'adb connect {address}' no confirmó la conexión "
         f"({result.stdout.strip() or result.stderr.strip() or 'sin respuesta'}). "
         f"Verifica que el celular y el PC esten en la misma red WiFi."
     )
@@ -106,15 +106,15 @@ def disconnect(address: str) -> None:
 def enable_over_wifi(usb_serial: str, port: int = DEFAULT_PORT) -> str:
     """
     Orquesta el cambio completo de USB a WiFi para un celular que ya
-    esta conectado por USB. Devuelve el nuevo "serial" (ip:puerto) que
+    está conectado por USB. Devuelve el nuevo "serial" (ip:puerto) que
     hay que usar en adelante para todo (scrcpy, getprop, etc).
 
     Requiere que el cable USB siga conectado durante este paso (recien
-    despues de conectar por WiFi se puede desenchufar).
+    después de conectar por WiFi se puede desenchufar).
     """
     if is_wireless_serial(usb_serial):
         raise WirelessError(
-            "Este celular ya esta conectado por WiFi, no por USB. "
+            "Este celular ya está conectado por WiFi, no por USB. "
             "Reconectalo por cable para poder reactivar el modo TCP/IP."
         )
 

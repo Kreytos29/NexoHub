@@ -1,4 +1,4 @@
-"""Detecta resolucion y refresh rate de los monitores conectados."""
+"""Detecta resolución y refresh rate de los monitores conectados."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -33,7 +33,14 @@ def detect_all() -> list[Monitor]:
             "Falta la libreria screeninfo. Instalala con: pip install screeninfo"
         )
     monitors = []
-    for m in get_monitors():
+    try:
+        found = list(get_monitors())
+    except Exception as exc:  # noqa: BLE001 (screeninfo lanza ScreenInfoError, etc.)
+        raise MonitorError(
+            f"No se pudo leer el monitor con screeninfo ({exc}). En Wayland "
+            f"puro puede fallar."
+        ) from exc
+    for m in found:
         monitors.append(
             Monitor(
                 name=getattr(m, "name", "unknown") or "unknown",
@@ -45,8 +52,14 @@ def detect_all() -> list[Monitor]:
             )
         )
     if not monitors:
-        raise MonitorError("No se detecto ningun monitor conectado.")
+        raise MonitorError("No se detectó ningún monitor conectado.")
     return monitors
+
+
+def assumed_monitor() -> Monitor:
+    """Monitor de reserva (Full HD) para cuando no hay forma de leer uno real,
+    por ejemplo en la línea de comandos sobre Wayland puro."""
+    return Monitor(name="desconocido", width=1920, height=1080, is_primary=True)
 
 
 def pick_target(monitors: list[Monitor], preferred_name: str | None = None) -> Monitor:

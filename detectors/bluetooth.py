@@ -2,14 +2,14 @@
 Estado (solo lectura) del Bluetooth del PC, para la ruta de audio
 "Bluetooth externo": el celular se empareja directo con el PC desde
 Android (Ajustes > Bluetooth > elegir el PC como salida de audio) y el
-audio del juego sale por ahi, sin pasar nunca por scrcpy -- por eso no
+audio del juego sale por ahí, sin pasar nunca por scrcpy -- por eso no
 compite con el video/control por CPU ni por el cable/WiFi.
 
 Este modulo NO empareja ni conecta nada (eso requiere el agente de
 emparejamiento interactivo de bluetoothctl, con confirmacion de PIN, y
 se hace una vez a mano); solo informa si hay un adaptador disponible y
 que dispositivos ya estan emparejados/conectados, para mostrarlo en la
-GUI como ayuda de diagnostico.
+GUI como ayuda de diagnóstico.
 """
 from __future__ import annotations
 
@@ -45,10 +45,10 @@ def _bluetoothctl(*args: str, timeout: int = 6) -> str:
         )
     except FileNotFoundError as exc:
         raise BluetoothError(
-            "bluetoothctl no esta instalado (paquete 'bluez-utils' en Arch)."
+            "bluetoothctl no está instalado (paquete 'bluez-utils' en Arch)."
         ) from exc
     except subprocess.TimeoutExpired as exc:
-        raise BluetoothError("bluetoothctl no respondio a tiempo.") from exc
+        raise BluetoothError("bluetoothctl no respondió a tiempo.") from exc
     return result.stdout
 
 
@@ -64,7 +64,7 @@ def _parse_device_lines(output: str) -> list[str]:
 def detect() -> BluetoothStatus:
     """
     Chequea si hay un adaptador Bluetooth y que dispositivos de audio
-    tiene emparejados/conectados. No lanza excepcion si simplemente no
+    tiene emparejados/conectados. No lanza excepción si simplemente no
     hay Bluetooth en el PC (available=False); si lanza BluetoothError es
     porque falta el binario o algo se colgo.
     """
