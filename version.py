@@ -11,5 +11,5 @@ LICENSE_NAME = "MIT"
 
 # "Firma" del autor (se repite igual en los demás programas del autor para
 # que se reconozcan como hechos por la misma persona).
-AUTHOR_HANDLE = "@kerytos29"
-AUTHOR_URL = "https://github.com/kerytos29/NexoHub"
+AUTHOR_HANDLE = "@Kreytos29"
+AUTHOR_URL = "https://github.com/Kreytos29/NexoHub"
